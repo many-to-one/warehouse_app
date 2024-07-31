@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
-from .database import Base
+from database.database import Base
+from sqladmin import ModelView
 
 class User(Base):
     __tablename__ = 'users'
@@ -17,3 +18,8 @@ class TokenBlacklist(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String, unique=True, index=True)
+
+
+class UserAdmin(ModelView, model=User):
+    column_list = [User.id, User.username, User.email]  # Columns to display in the list view
+    form_columns = [User.username, User.email, User.hashed_password]  # Columns to display in the form view

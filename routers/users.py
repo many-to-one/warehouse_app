@@ -2,20 +2,38 @@ from typing import List
 from fastapi import APIRouter, Depends, Form, HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
-from users import auth, schemas, crud, database
+# from database import database
+from users import auth, schemas, crud
 from users.schemas import *
-from users.database import get_db
+from database.database import get_db
 from users.models import *
 from users.auth import oauth2_scheme
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqladmin import Admin
+from database.database import async_engine
+
+
 router = APIRouter(
         prefix="/users", 
         tags=["users"]
     )
 
+
+
+@router.get("/admin/{user_id}", response_model=UserDisplay)
+async def get_admin(
+        user_id: int, 
+        db: AsyncSession = Depends(get_db),
+        # token: str = Depends(oauth2_scheme)
+        current_user: schemas.UserBase = Depends(auth.get_current_user),
+    ):
+    user = await crud.get_user_by_id(db, user_id=user_id)
+
+
+    return user
 
 
 @router.post("/registration/", response_model=UserDisplay)
@@ -36,6 +54,7 @@ async def logout(
     ):
     blacklisted_token = TokenBlacklist(token=token)
     db.add(blacklisted_token)
+    token = None
     await db.commit()
     return {"message": "You have been logged out."}
 
@@ -44,19 +63,18 @@ async def logout(
 async def get_user(
         user_id: int, 
         db: AsyncSession = Depends(get_db),
-        token: str = Depends(oauth2_scheme)
-        # current_user: schemas.UserBase = Depends(auth.get_current_user),
+        # token: str = Depends(oauth2_scheme)
+        current_user: schemas.UserBase = Depends(auth.get_current_user),
     ):
-    db_user = await crud.get_user_by_id(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
+    user = await crud.get_user_by_id(db, user_id=user_id)
+
+    return user
 
 
 @router.get("/all", response_model=List[UserDisplay])
 async def get_user(
         db: AsyncSession = Depends(get_db),
-        current_user: schemas.UserBase = Depends(await auth.get_current_user),
+        current_user: schemas.UserBase = Depends(auth.get_current_user),
     ):
     result = await db.execute(select(User))
     users = result.scalars().all()
@@ -65,14 +83,57 @@ async def get_user(
     return users
 
 
-@router.get("/put_user/{user_id}", response_model=List[UserDisplay])
+@router.patch("/put_user/{user_id}", response_model=UserDisplay)
 async def put_user(
         user_id: int,
         request: UserBase,
         db: AsyncSession = Depends(get_db),
-        current_user: schemas.UserBase = Depends(await  auth.get_current_user),
+        current_user: schemas.UserBase = Depends(auth.get_current_user),
     ):
     user = await crud.get_user_by_id(db, user_id=user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="Users not found")
+    
+    if request.username is not None:
+        user.username = request.username
+    if request.email is not None:
+        user.email = request.email
+
+    db.add(user)
+    await db.commit()  
+    await db.refresh(user)
+
     return user
+
+
+@router.delete("/deletet_user/{user_id}")
+async def delete_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: schemas.UserBase = Depends(auth.get_current_user)
+):
+    user = await crud.get_user_by_id(db, user_id=user_id)
+    
+    db.delete(user)
+    await db.commit()
+    
+    return {"detail": "User deleted successfully!"}
+
+
+@router.post("/change_password/{user_id}")
+async def change_password(
+    user_id: int,
+    request: ChangePassword,
+    db: AsyncSession = Depends(get_db),
+    current_user: schemas.UserBase = Depends(auth.get_current_user),
+):
+    user = await crud.get_user_by_id(db, user_id=user_id)
+    new_password = await auth.new_password(
+        db,
+        request.email,
+        request.old_password,
+        request.new_password,
+    )
+    
+    user.hashed_password = new_password
+    await db.commit()
+    
+    return {"message": "The password has been changed successfully!"}

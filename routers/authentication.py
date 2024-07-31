@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from users import auth, crud
-from users.database import get_db
+from database.database import get_db
 from users.models import TokenBlacklist
 from users.schemas import *
 from users.auth import oauth2_scheme
@@ -12,8 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter()
 
 
-@router.post("/token", response_model=Token)
+@router.post("/token", response_model=Token,)
 async def login_for_access_token(
+    request: Request,
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
     ):
@@ -28,5 +30,7 @@ async def login_for_access_token(
     access_token = await auth.create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
+    response.set_cookie(key="access_token", value=access_token, httponly=True)
+    print('################ cookies ################', response.body.decode)
    
     return {"access_token": access_token, "token_type": "bearer"}

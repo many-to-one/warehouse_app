@@ -22,7 +22,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'users'))
-from users.database import Base  # Import your Base
+from database.database import Base  # Import your Base
 from users.models import User  # Import your models to ensure they are registered with SQLAlchemy
 
 target_metadata = Base.metadata

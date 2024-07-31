@@ -1,10 +1,8 @@
-from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from . import models, schemas, auth
-# from .auth import get_password_hash
+from . import auth
 from users.schemas import *
 from users.crud import *
-from users.database import get_db
 from users.models import *
 from sqlalchemy.future import select
 
@@ -25,4 +23,6 @@ async def create_user(db: AsyncSession, user_form: UserCreateForm):
 async def get_user_by_id(db: AsyncSession, user_id: int):
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalars().first()  # Extract the first user from the result
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     return user

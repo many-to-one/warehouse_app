@@ -22,3 +22,8 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+class ChangePassword(BaseModel):
+    email: EmailStr
+    old_password: str
+    new_password: str
