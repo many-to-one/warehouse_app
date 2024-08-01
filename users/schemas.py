@@ -2,19 +2,27 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class UserBase(BaseModel):
+    id: int
     username: str
     email: EmailStr
+    is_admin: bool
+    is_active: bool
 
 
-class UserCreateForm(UserBase):
+class UserCreateForm(BaseModel):
+    username: str
+    email: EmailStr
     password: str
 
-class UserDisplay(UserBase):
+class UserDisplay(BaseModel):
     id: int
     is_active: bool
 
     class Config:
         from_attributes = True
+
+class UserLogOut(BaseModel):
+    id: int
 
 class Token(BaseModel):
     access_token: str

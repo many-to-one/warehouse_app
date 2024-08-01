@@ -1,19 +1,12 @@
 from typing import List
-from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
-# from database import database
 from users import auth, schemas, crud
 from users.schemas import *
 from database.database import get_db
 from users.models import *
 from users.auth import oauth2_scheme
-from fastapi.security import OAuth2PasswordRequestForm
-from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from sqladmin import Admin
-from database.database import async_engine
 
 
 router = APIRouter(
@@ -21,19 +14,6 @@ router = APIRouter(
         tags=["users"]
     )
 
-
-
-@router.get("/admin/{user_id}", response_model=UserDisplay)
-async def get_admin(
-        user_id: int, 
-        db: AsyncSession = Depends(get_db),
-        # token: str = Depends(oauth2_scheme)
-        current_user: schemas.UserBase = Depends(auth.get_current_user),
-    ):
-    user = await crud.get_user_by_id(db, user_id=user_id)
-
-
-    return user
 
 
 @router.post("/registration/", response_model=UserDisplay)
@@ -49,12 +29,18 @@ async def create_user(
 
 @router.post("/logout/{user_id}")
 async def logout(
+        response: Response,
+        user: schemas.UserBase = Depends(auth.get_current_user),
+        user_form: UserLogOut = Depends(UserLogOut),
         token: str = Depends(oauth2_scheme), 
         db: AsyncSession = Depends(get_db)
     ):
     blacklisted_token = TokenBlacklist(token=token)
     db.add(blacklisted_token)
-    token = None
+    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="username")
+    response.delete_cookie(key="is_admin")
+    user.is_active == False
     await db.commit()
     return {"message": "You have been logged out."}
 
@@ -63,10 +49,10 @@ async def logout(
 async def get_user(
         user_id: int, 
         db: AsyncSession = Depends(get_db),
-        # token: str = Depends(oauth2_scheme)
-        current_user: schemas.UserBase = Depends(auth.get_current_user),
+        user: schemas.UserBase = Depends(auth.get_current_user),
     ):
-    user = await crud.get_user_by_id(db, user_id=user_id)
+    # user = await crud.get_user_by_id(db, user_id=user_id)
+    # print('###### current_user ##########', user)
 
     return user
 
@@ -88,9 +74,9 @@ async def put_user(
         user_id: int,
         request: UserBase,
         db: AsyncSession = Depends(get_db),
-        current_user: schemas.UserBase = Depends(auth.get_current_user),
+        user: schemas.UserBase = Depends(auth.get_current_user),
     ):
-    user = await crud.get_user_by_id(db, user_id=user_id)
+    # user = await crud.get_user_by_id(db, user_id=user_id)
     
     if request.username is not None:
         user.username = request.username
@@ -108,9 +94,9 @@ async def put_user(
 async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: schemas.UserBase = Depends(auth.get_current_user)
+    user: schemas.UserBase = Depends(auth.get_current_user)
 ):
-    user = await crud.get_user_by_id(db, user_id=user_id)
+    # user = await crud.get_user_by_id(db, user_id=user_id)
     
     db.delete(user)
     await db.commit()
@@ -123,9 +109,9 @@ async def change_password(
     user_id: int,
     request: ChangePassword,
     db: AsyncSession = Depends(get_db),
-    current_user: schemas.UserBase = Depends(auth.get_current_user),
+    user: schemas.UserBase = Depends(auth.get_current_user),
 ):
-    user = await crud.get_user_by_id(db, user_id=user_id)
+    # user = await crud.get_user_by_id(db, user_id=user_id)
     new_password = await auth.new_password(
         db,
         request.email,

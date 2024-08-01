@@ -1,51 +1,37 @@
-from fastapi import Depends, FastAPI, HTTPException
-from routers import users, authentication
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import RedirectResponse
 from sqladmin import Admin
 
-from users.auth import get_current_user, oauth2_scheme
-from users.models import UserAdmin
-from database.database import async_engine, get_db
-from sqlalchemy.ext.asyncio import AsyncSession
+from routers import users, authentication, products
+from users.models import ProductAdmin, TokenBlacklistAdmin, UserAdmin
+from database.database import async_engine
 
 app = FastAPI()
 
 
 app.include_router(users.router)
 app.include_router(authentication.router)
+app.include_router(products.router)
 
 admin = Admin(app, async_engine)
-# admin.add_view(UserAdmin)
+admin.add_view(UserAdmin)
+admin.add_view(TokenBlacklistAdmin)
+admin.add_view(ProductAdmin)
 
-from fastapi import Request
-from fastapi.responses import RedirectResponse
-from jose import JWTError, jwt
-from users.auth import SECRET_KEY, ALGORITHM
 @app.middleware("http")
 async def admin_auth_middleware(request: Request, call_next):
     if request.url.path.startswith("/admin") and not request.url.path.startswith("/admin/static"):
-        # Extract the token from the request
-        # token = await oauth2_scheme(request)
-        # token = request.cookies.get("access_token")
-        # token: str = Depends(oauth2_scheme)
-        # payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        # username: str = payload.get("sub")
-        user = request.cookies
-        print('################ user ################', user)
-        # if not token:
-        #     return RedirectResponse(url="/login")
-
+        token = request.cookies.get("access_token")
+        is_admin = request.cookies.get("is_admin")
+        print('################ request.cookies ++ ################', request.cookies)
+        print('################ request.cookies is_admin ################', is_admin)
+        if not token or is_admin == "False":
+            return RedirectResponse(url="/login")  
         
-        # Get a database session
-        # async with get_db() as db:
-        #     try:
-        #         user = await get_current_user(token=token, db=db)
-        #         print('################ user ################', user)
-        #         request.state.user = user
-        #     except HTTPException:
-        #         return RedirectResponse(url="/login")
-                
     response = await call_next(request)
-    return response
+    return response            
+            
+        
 
 
 @app.get("/")

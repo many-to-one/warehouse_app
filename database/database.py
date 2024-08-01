@@ -23,7 +23,12 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "sqlite+aiosqlite:///./async_warehouse.db"
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+# DATABASE_URL = "sqlite+aiosqlite:///./async_warehouse.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 Base = declarative_base()
 

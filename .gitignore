@@ -86,6 +86,7 @@ ipython_config.py
 .env.*
 .venv
 .venv.*
+venv
 
 # PyCharm
 .idea/
@@ -110,6 +111,7 @@ Desktop.ini
 
 # ALEMBIC
 alembic/versions/*.pyc
+alembic.ini
 
 # SQLite database files
 *.db

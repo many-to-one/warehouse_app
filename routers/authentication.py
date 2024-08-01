@@ -20,6 +20,8 @@ async def login_for_access_token(
     db: AsyncSession = Depends(get_db),
     ):
     user = await auth.authenticate_user(db, form_data.username, form_data.password)
+    user.is_active == True
+    await db.commit()
     if not user:
         raise HTTPException(
             status_code=400,
@@ -30,7 +32,12 @@ async def login_for_access_token(
     access_token = await auth.create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    response.set_cookie(key="access_token", value=access_token, httponly=True)
-    print('################ cookies ################', response.body.decode)
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite='Strict')
+    response.set_cookie(key="username", value=user.username, secure=True, samesite='Strict')
+    response.set_cookie(key="is_admin", value=user.is_admin, httponly=True, secure=True, samesite='Strict')
+    # print('################ cookies ################', response.body.decode)
    
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+            "access_token": access_token, 
+            "token_type": "bearer"
+        }

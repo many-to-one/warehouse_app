@@ -10,10 +10,14 @@ from . import schemas, models
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 # to get a string like this run:
 # python generate_secret_key.py
-SECRET_KEY = "c46d7468595d8f6a331b892676f8658b52b4dff7b98b75d50ce53632793b2540"
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -40,11 +44,6 @@ async def create_access_token(data: dict, expires_delta: Optional[timedelta] = N
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
-
-# async def get_user(db: Session, username: str):
-#     result = await db.execute(select(models.User).filter(models.User.username == username))
-#     user = result.scalars().first()  # Extract the first user from the result
-#     return user
 
 
 
