@@ -68,3 +68,20 @@ async def edit_product(
     else:
         raise HTTPException(status_code=400, detail="Permission deny")
     
+
+@router.post("/delete_product/{id}")
+async def edit_product(
+        id: int,
+        db: AsyncSession = Depends(get_db),
+        user: UserBase = Depends(auth.get_current_user),
+    ):
+        product = await pr_crud.get_product(db=db, id=id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        if  user.is_admin:
+            await db.delete(product)
+            await db.commit()
+            await db.flush()
+            return {"message": "The product is deleted successfully!"}
+        else:
+            raise HTTPException(status_code=400, detail="Permission deny")

@@ -1,5 +1,7 @@
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from sqladmin import Admin
 
 from routers import users, authentication, products
@@ -7,7 +9,8 @@ from users.models import ProductAdmin, TokenBlacklistAdmin, UserAdmin
 from database.database import async_engine
 
 app = FastAPI()
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 app.include_router(users.router)
 app.include_router(authentication.router)
@@ -35,6 +38,14 @@ async def admin_auth_middleware(request: Request, call_next):
 
 
 @app.get("/")
-async def root():
-    return {"message": "Hello World here"}
+async def root(request: Request):
+    return templates.TemplateResponse(
+        request=request, name="home.html", context={"id": 1}
+    )
+
+@app.get("/login")
+async def root(request: Request):
+    return templates.TemplateResponse(
+        request=request, name="login.html", context={"id": 1}
+    )
 

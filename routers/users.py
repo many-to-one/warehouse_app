@@ -1,5 +1,6 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.future import select
 from users import auth, schemas, crud
 from users.schemas import *
@@ -7,6 +8,8 @@ from database.database import get_db
 from users.models import *
 from users.auth import oauth2_scheme
 from sqlalchemy.ext.asyncio import AsyncSession
+
+templates = Jinja2Templates(directory="templates")
 
 
 router = APIRouter(
@@ -25,6 +28,13 @@ async def create_user(
     if user:
         raise HTTPException(status_code=400, detail="Email already registered")
     return await crud.create_user(db=db, user_form=user_form)
+
+
+@router.post("/login/")
+async def login_view(request: Request):
+    return templates.TemplateResponse(
+        request=request, name="home.html", context={"id": 1}
+    )
 
 
 @router.post("/logout")
