@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
@@ -7,12 +8,20 @@ class UserBase(BaseModel):
     email: EmailStr
     is_admin: bool
     is_active: bool
+    created_at: datetime
 
 
 class UserCreateForm(BaseModel):
     username: str
     email: EmailStr
     password: str
+
+
+class UserEditForm(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+
 
 class UserDisplay(BaseModel):
     id: int

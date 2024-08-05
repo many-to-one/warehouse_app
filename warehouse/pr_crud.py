@@ -32,3 +32,13 @@ async def all_products(db: AsyncSession):
         raise HTTPException(status_code=404, detail="No products")
     
     return products
+
+async def get_product(db: AsyncSession, id=int):
+
+    result = await db.execute(select(ProductsList).filter(ProductsList.id == id))
+    product = result.scalars().first()
+
+    if product is None:
+        raise HTTPException(status_code=404, detail="No product")
+    
+    return product

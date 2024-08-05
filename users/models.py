@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, func
 from sqlalchemy.orm import relationship
 from database.database import Base
 from sqladmin import ModelView
@@ -14,6 +14,8 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=True)
+    edited_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class TokenBlacklist(Base):
@@ -21,6 +23,7 @@ class TokenBlacklist(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String, unique=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=True)
 
 
 
@@ -31,6 +34,8 @@ class ProductsList(Base):
     title = Column(String, index=True)
     ean = Column(String, index=True)
     count = Column(Integer, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=True)
+    edited_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class UserAdmin(ModelView, model=User):
@@ -47,6 +52,8 @@ class UserAdmin(ModelView, model=User):
             User.email, 
             User.is_active,
             User.is_admin,
+            User.created_at,
+            User.edited_at,
         ]  
     
 
@@ -72,4 +79,6 @@ class ProductAdmin(ModelView, model=ProductsList):
             ProductsList.title, 
             ProductsList.ean,
             ProductsList.count,
+            ProductsList.created_at,
+            ProductsList.edited_at,
         ]  

@@ -20,8 +20,10 @@ async def login_for_access_token(
     db: AsyncSession = Depends(get_db),
     ):
     user = await auth.authenticate_user(db, form_data.username, form_data.password)
-    user.is_active == True
+    user.is_active = True
+    db.add(user)
     await db.commit()
+    await db.refresh(user)
     if not user:
         raise HTTPException(
             status_code=400,

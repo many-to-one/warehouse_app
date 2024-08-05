@@ -26,3 +26,11 @@ async def get_user_by_id(db: AsyncSession, user_id: int):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+async def delete_user(db: AsyncSession, user_id: int):
+    result = await db.execute(select(User).filter(User.id == user_id))
+    user = result.scalars().first()  # Extract the first user from the result
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user

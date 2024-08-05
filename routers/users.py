@@ -27,12 +27,11 @@ async def create_user(
     return await crud.create_user(db=db, user_form=user_form)
 
 
-@router.post("/logout/{user_id}")
+@router.post("/logout")
 async def logout(
         response: Response,
         user: schemas.UserBase = Depends(auth.get_current_user),
-        user_form: UserLogOut = Depends(UserLogOut),
-        token: str = Depends(oauth2_scheme), 
+        token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_db)
     ):
     blacklisted_token = TokenBlacklist(token=token)
@@ -40,24 +39,26 @@ async def logout(
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="username")
     response.delete_cookie(key="is_admin")
-    user.is_active == False
+    user.is_active = False
+    db.add(user)
     await db.commit()
+    await db.refresh(user)
     return {"message": "You have been logged out."}
 
 
-@router.get("/user/{user_id}", response_model=UserDisplay)
+@router.get("/user/{user_id}", response_model=UserBase)
 async def get_user(
         user_id: int, 
         db: AsyncSession = Depends(get_db),
-        user: schemas.UserBase = Depends(auth.get_current_user),
+        user_: schemas.UserBase = Depends(auth.get_current_user),
     ):
-    # user = await crud.get_user_by_id(db, user_id=user_id)
+    user = await crud.get_user_by_id(db, user_id=user_id)
     # print('###### current_user ##########', user)
 
     return user
 
 
-@router.get("/all", response_model=List[UserDisplay])
+@router.get("/all", response_model=List[UserBase])
 async def get_user(
         db: AsyncSession = Depends(get_db),
         current_user: schemas.UserBase = Depends(auth.get_current_user),
@@ -69,10 +70,11 @@ async def get_user(
     return users
 
 
-@router.patch("/put_user/{user_id}", response_model=UserDisplay)
+@router.patch("/put_user", response_model=UserDisplay)
 async def put_user(
-        user_id: int,
-        request: UserBase,
+        request: UserEditForm,
+        response: Response,
+        # user_form: UserCreateForm = Depends(UserCreateForm),
         db: AsyncSession = Depends(get_db),
         user: schemas.UserBase = Depends(auth.get_current_user),
     ):
@@ -90,17 +92,44 @@ async def put_user(
     return user
 
 
-@router.delete("/deletet_user/{user_id}")
-async def delete_user(
+@router.delete("/delete_user_by_id/{user_id}")
+async def delete_user_by_id(
+    response: Response,
     user_id: int,
     db: AsyncSession = Depends(get_db),
     user: schemas.UserBase = Depends(auth.get_current_user)
 ):
-    # user = await crud.get_user_by_id(db, user_id=user_id)
+    if user.is_admin == True:
+        user_ = await crud.get_user_by_id(db, user_id=user_id)
+        # print('########## user #############', user_.username)
+        response.delete_cookie(key="access_token")
+        response.delete_cookie(key="username")
+        response.delete_cookie(key="is_admin")
+        user.is_active == False
+        
+        await db.delete(user_)
+        await db.commit()
+        await db.flush()
+        
+        return {"detail": "User deleted successfully!"}
+    else:
+        raise HTTPException(status_code=400, detail="Permission deny")
     
-    db.delete(user)
+
+@router.delete("/delete_user_by_himself")
+async def delete_user_by_himself(
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    user: schemas.UserBase = Depends(auth.get_current_user)
+):
+    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="username")
+    response.delete_cookie(key="is_admin")
+    user.is_active == False
+    await db.delete(user)
     await db.commit()
-    
+    await db.flush()
+
     return {"detail": "User deleted successfully!"}
 
 
