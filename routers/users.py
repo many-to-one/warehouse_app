@@ -30,11 +30,14 @@ async def create_user(
     return await crud.create_user(db=db, user_form=user_form)
 
 
-@router.post("/login/")
-async def login_view(request: Request):
-    return templates.TemplateResponse(
-        request=request, name="home.html", context={"id": 1}
-    )
+@router.post("/login_view")
+async def login_view(
+    request: Request,
+    user_form: UserLoginForm = Depends(UserLoginForm),
+):
+    # form = UserLoginForm(request)
+    print('################ login form ################', user_form)
+    return {"message": "You have been log in."}
 
 
 @router.post("/logout")

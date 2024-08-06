@@ -10,6 +10,10 @@ class UserBase(BaseModel):
     is_active: bool
     created_at: datetime
 
+class UserLoginForm(BaseModel):
+    username: str
+    password: str
+
 
 class UserCreateForm(BaseModel):
     username: str

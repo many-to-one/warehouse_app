@@ -1,38 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Login</title>
-	<link href="{{ url_for('static', path='/css/login.css') }}" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@500&display=swap" rel="stylesheet">
+    <title>Login</title>
+    <link href="{{ url_for('static', path='/css/login.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
-	<div class="main">  	
-		<input type="checkbox" id="chk" aria-hidden="true">
+    <div class="main">
+        <input type="checkbox" id="chk" aria-hidden="true">
 
-			<div class="signup">
-				<form>
-					<label for="chk" aria-hidden="true">Sign up</label>
-					<input type="text" name="txt" placeholder="User name" required="">
-					<input type="email" name="email" placeholder="Email" required="">
-					<input type="password" name="pswd" placeholder="Password" required="">
-					<button>Sign up</button>
-				</form>
-			</div>
+        <div class="signup">
+            <form>
+                <label for="chk" aria-hidden="true">Sign up</label>
+                <input type="text" name="txt" placeholder="User name" required="">
+                <input type="email" name="email" placeholder="Email" required="">
+                <input type="password" name="pswd" placeholder="Password" required="">
+                <button>Sign up</button>
+            </form>
+        </div>
 
-			<div class="login">
-				<form>
-					<label for="chk" aria-hidden="true">Login</label>
-					<input type="email" name="email" placeholder="Email" required="">
-					<input type="password" name="pswd" placeholder="Password" required="">
-					<button onclick="loginApi()">Login</button>
-				</form>
-			</div>
-	</div>
+        <div class="login">
+            <form id="login-form">
+                <label for="chk" aria-hidden="true">Login</label>
+                <input id="username" type="text" name="username" placeholder="Username" required="">
+                <input id="password" type="password" name="password" placeholder="Password" required="">
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
 
-	<script>
-		function loginApi() {
-			
-		}
-	</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.8/axios.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('login-form').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                await loginApi();
+            });
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            async function loginApi() {
+
+            const csrftoken = getCookie('csrftoken');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            await axios.post('/token', { username, password }, {
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+                .then(function(response) {
+                    if (response.status === 200) {
+                        console.log('Login successful:', response.data);
+                        // Redirect to homepage or dashboard
+                        // window.location.href = '/';
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error logging in:', error);
+                });
+            }
+        
+        });
+    </script>
 </body>
 </html>

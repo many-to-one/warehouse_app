@@ -19,6 +19,7 @@ async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
     ):
+    print('################ form_data ################', form_data)
     user = await auth.authenticate_user(db, form_data.username, form_data.password)
     user.is_active = True
     db.add(user)
