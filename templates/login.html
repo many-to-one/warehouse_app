@@ -31,6 +31,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.8/axios.min.js"></script>
     <script>
+        console.log('document.cookie', document.cookie)
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('login-form').addEventListener('submit', async function(event) {
                 event.preventDefault();
@@ -68,7 +69,7 @@
                     if (response.status === 200) {
                         console.log('Login successful:', response.data);
                         // Redirect to homepage or dashboard
-                        // window.location.href = '/';
+                        window.location.href = '/';
                     }
                 })
                 .catch(function(error) {

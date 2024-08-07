@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 
 from database import database
@@ -81,8 +81,10 @@ async def new_password(db: AsyncSession, email: str, old_password: str, new_pass
     return password
 
 
-
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(database.get_db)):
+# For RESTFULL API
+# async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(database.get_db)):
+#For template logic
+async def get_current_user(token, db: AsyncSession = Depends(database.get_db)):
 
     bt = await is_token_blacklisted(token, db)
     if bt:

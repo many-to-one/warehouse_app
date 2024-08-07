@@ -1,12 +1,14 @@
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqladmin import Admin
 
 from routers import users, authentication, products
+from users import auth, schemas
 from users.models import ProductAdmin, TokenBlacklistAdmin, UserAdmin
-from database.database import async_engine
+from database.database import async_engine, get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -38,9 +40,21 @@ async def admin_auth_middleware(request: Request, call_next):
 
 
 @app.get("/")
-async def root(request: Request):
+async def root(request: Request, db: AsyncSession = Depends(get_db)):
+
+    username = request.cookies.get("username")
+    user_id = request.cookies.get("user_id")
+    access_token = request.cookies.get("access_token")
+    # print('################ user_id ################', user_id)
+    user = await auth.get_current_user(access_token, db)
+    print('################ user__ ################', user)
     return templates.TemplateResponse(
-        request=request, name="home.html", context={"id": 1}
+        request=request, 
+        name="home.html", 
+        context={
+                "username": username,
+                "user_id": user_id,
+            }
     )
 
 @app.get("/login")

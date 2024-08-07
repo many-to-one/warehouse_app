@@ -7,6 +7,10 @@
     <link href="{{ url_for('static', path='/css/home.css') }}" rel="stylesheet">
 </head>
 <body>
-    <p>Hello {{id}}</p>
+    <p>Hello, {{ user_id }}</p>
+    <a href="{{ url_for('get_user', user_id=user_id) }}">Profil</a>
+    <form action="{{ url_for('logout') }}" method="post">
+        <button type="submit">Log out</button>
+    </form>
 </body>
 </html>

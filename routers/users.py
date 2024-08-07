@@ -30,25 +30,29 @@ async def create_user(
     return await crud.create_user(db=db, user_form=user_form)
 
 
-@router.post("/login_view")
-async def login_view(
-    request: Request,
-    user_form: UserLoginForm = Depends(UserLoginForm),
-):
-    # form = UserLoginForm(request)
-    print('################ login form ################', user_form)
-    return {"message": "You have been log in."}
+# @router.post("/login_view")
+# async def login_view(
+#     request: Request,
+#     user_form: UserLoginForm = Depends(UserLoginForm),
+# ):
+#     # form = UserLoginForm(request)
+#     print('################ login form ################', user_form)
+#     return {"message": "You have been log in."}
 
 
 @router.post("/logout")
 async def logout(
+        request: Request,
         response: Response,
-        user: schemas.UserBase = Depends(auth.get_current_user),
-        token: str = Depends(oauth2_scheme),
+        # user: schemas.UserBase = Depends(auth.get_current_user),
+        # token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_db)
     ):
-    blacklisted_token = TokenBlacklist(token=token)
+    access_token = request.cookies.get("access_token")
+    user = await auth.get_current_user(access_token, db)
+    blacklisted_token = TokenBlacklist(token=access_token)
     db.add(blacklisted_token)
+    await db.commit()
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="username")
     response.delete_cookie(key="is_admin")
@@ -62,13 +66,18 @@ async def logout(
 @router.get("/user/{user_id}", response_model=UserBase)
 async def get_user(
         user_id: int, 
+        request: Request,
         db: AsyncSession = Depends(get_db),
-        user_: schemas.UserBase = Depends(auth.get_current_user),
+        # user_: schemas.UserBase = Depends(auth.get_current_user),
     ):
-    user = await crud.get_user_by_id(db, user_id=user_id)
+    access_token = request.cookies.get("access_token")
+    user = await auth.get_current_user(access_token, db)
     # print('###### current_user ##########', user)
 
-    return user
+    # return user # api response
+    return templates.TemplateResponse(
+        request=request, name="user.html", context={"user": user}
+    )
 
 
 @router.get("/all", response_model=List[UserBase])

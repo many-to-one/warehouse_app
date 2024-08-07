@@ -37,7 +37,9 @@ async def login_for_access_token(
     )
     response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite='Strict')
     response.set_cookie(key="username", value=user.username, secure=True, samesite='Strict')
+    response.set_cookie(key="user_id", value=user.id, secure=True, samesite='Strict')
     response.set_cookie(key="is_admin", value=user.is_admin, httponly=True, secure=True, samesite='Strict')
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite='Strict')
     # print('################ cookies ################', response.body.decode)
    
     return {
